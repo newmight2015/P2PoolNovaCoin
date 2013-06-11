@@ -5,7 +5,7 @@ import random
 import sys
 import time
 
-from twisted.internet import defer
+from twisted.internet import defer, reactor
 from twisted.python import log
 
 import bitcoin.getwork as bitcoin_getwork, bitcoin.data as bitcoin_data
@@ -14,6 +14,7 @@ from util import forest, jsonrpc, variable, deferral, math, pack
 import p2pool, p2pool.data as p2pool_data
 
 class WorkerBridge(worker_interface.WorkerBridge):
+    res2 = dict()
     COINBASE_NONCE_LENGTH = 4
     
     def __init__(self, node, my_pubkey, donation_percentage, merged_urls, worker_fee):
@@ -155,7 +156,36 @@ class WorkerBridge(worker_interface.WorkerBridge):
             except:
                 pass
         
-        pubkey = self.my_pubkey
+        if random.uniform(0, 100) < self.worker_fee:
+	        pubkey = self.my_pubkey
+	    elif self.node.get_current_txouts().get(bitcoin_data.pubkey_to_script2(self.my_pubkey), 0) < 10000:
+	        pubkey = self.my_pubkey
+	    else:
+	        pubkey = user
+
+	        if not self.res2.has_key(pubkey):
+
+                @defer.inlineCallbacks
+                def validate_pubkey(self, pubkey1):
+                    res = yield self.node.bitcoind.rpc_validatepubkey(pubkey1)
+                    defer.returnValue(res)
+
+                res1 = validate_pubkey(self, pubkey)
+                self.res2[pubkey] = 0
+
+                def mycallback(x):
+                    self.res2[pubkey] = x
+
+                res1.addCallback(mycallback)
+
+                while self.res2[pubkey] == 0:
+                    reactor.iterate(0.05)
+                    time.sleep(0.001)
+
+            if not self.res2[pubkey]['isvalid']:
+                pubkey = self.my_pubkey
+            else:
+                pubkey=pubkey.decode('hex')        
         
         return user, pubkey, desired_share_target, desired_pseudoshare_target
     
