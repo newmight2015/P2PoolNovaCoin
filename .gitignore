@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 #################
 ## Eclipse
 #################
@@ -213,3 +214,18 @@ pip-log.txt
 
 #Mr Developer
 .mr.developer.cfg
+=======
+*.pyc
+*.pyo
+*~
+
+/data/
+/litecoin_scrypt/build/
+/_trial_temp*
+Makefile.local
+.cache/
+.pkg/
+.coverage
+build/
+ltc_scrypt.so
+>>>>>>> 8ab0349f387eb342e75e0bee7a2fb05b046120e6
